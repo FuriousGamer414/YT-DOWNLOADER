@@ -149,18 +149,27 @@
       transform-style: preserve-3d;
     }
     @keyframes hourglassRotate {
-      0% {
-        transform: rotateX(0deg);
-      }
-      50% {
-        transform: rotateX(180deg);
-      }
-      100% {
-        transform: rotateX(180deg);
-      }
+      0% { transform: rotateX(0deg); }
+      50% { transform: rotateX(180deg); }
+      100% { transform: rotateX(180deg); }
     }
     .hourglassCapTop {
       top: 0;
+    }
+    .hourglassCapTop:before {
+      top: -25px;
+    }
+    .hourglassCapTop:after {
+      top: -20px;
+    }
+    .hourglassCapBottom {
+      bottom: 0;
+    }
+    .hourglassCapBottom:before {
+      bottom: -25px;
+    }
+    .hourglassCapBottom:after {
+      bottom: -20px;
     }
     .hourglassGlassTop {
       transform: rotateX(90deg);
@@ -181,6 +190,49 @@
       height: 6px;
       background-color: #999999;
       opacity: 0.5;
+    }
+    .hourglassGlass:before,
+    .hourglassGlass:after {
+      content: "";
+      display: block;
+      position: absolute;
+      background-color: #017268;
+      left: -17px;
+      width: 44px;
+      height: 28px;
+    }
+    .hourglassGlass:before {
+      top: -27px;
+      border-radius: 0 0 25px 25px;
+    }
+    .hourglassGlass:after {
+      bottom: -27px;
+      border-radius: 25px 25px 0 0;
+    }
+    .hourglassCurves:before,
+    .hourglassCurves:after {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 32px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #333;
+      animation: hideCurves 2s ease-in 0s infinite;
+    }
+    .hourglassCurves:before {
+      left: 15px;
+    }
+    .hourglassCurves:after {
+      left: 29px;
+    }
+    @keyframes hideCurves {
+      0% { opacity: 1; }
+      25% { opacity: 0; }
+      30% { opacity: 0; }
+      40% { opacity: 1; }
+      100% { opacity: 1; }
     }
     .hourglassSandStream:before {
       content: "";
@@ -203,42 +255,51 @@
       animation: sandStream2 2s ease-in 0s infinite;
     }
     @keyframes sandStream1 {
-      0% {
-        height: 0;
-        top: 35px;
-      }
-      50% {
-        height: 0;
-        top: 45px;
-      }
-      60% {
-        height: 35px;
-        top: 8px;
-      }
-      100% {
-        height: 0;
-        top: 8px;
-      }
+      0% { height: 0; top: 35px; }
+      50% { height: 0; top: 45px; }
+      60% { height: 35px; top: 8px; }
+      85% { height: 35px; top: 8px; }
+      100% { height: 0; top: 8px; }
     }
     @keyframes sandStream2 {
-      0% {
-        opacity: 0;
-      }
-      50% {
-        opacity: 0;
-      }
-      51% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
-      91% {
-        opacity: 0;
-      }
-      100% {
-        opacity: 0;
-      }
+      0% { opacity: 0; }
+      50% { opacity: 0; }
+      51% { opacity: 1; }
+      90% { opacity: 1; }
+      91% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    .hourglassSand:before,
+    .hourglassSand:after {
+      content: "";
+      display: block;
+      position: absolute;
+      left: 6px;
+      background-color: white;
+      perspective: 500px;
+    }
+    .hourglassSand:before {
+      top: 8px;
+      width: 39px;
+      border-radius: 3px 3px 30px 30px;
+      animation: sandFillup 2s ease-in 0s infinite;
+    }
+    .hourglassSand:after {
+      border-radius: 30px 30px 3px 3px;
+      animation: sandDeplete 2s ease-in 0s infinite;
+    }
+    @keyframes sandFillup {
+      0% { opacity: 0; height: 0; }
+      60% { opacity: 1; height: 0; }
+      100% { opacity: 1; height: 17px; }
+    }
+    @keyframes sandDeplete {
+      0% { opacity: 0; top: 45px; height: 17px; width: 38px; left: 6px; }
+      1% { opacity: 1; top: 45px; height: 17px; width: 38px; left: 6px; }
+      24% { opacity: 1; top: 45px; height: 17px; width: 38px; left: 6px; }
+      25% { opacity: 1; top: 41px; height: 17px; width: 38px; left: 6px; }
+      50% { opacity: 1; top: 41px; height: 17px; width: 38px; left: 6px; }
+      90% { opacity: 1; top: 41px; height: 0; width: 10px; left: 20px; }
     }
   </style>
 </head>
@@ -321,14 +382,16 @@
         const data = await response.json();
         showLoading(false);
 
-        if (!data.success || !data.fileKey) {
+        if (!data.success || !data.fileKey || !data.result || !data.result.title) {
           showError('No download link available.');
           return;
         }
 
         const fileKey = data.fileKey;
+        const title = data.result.title;
+
         results.innerHTML = `
-          <div><strong>Ready to download:</strong> ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+          <div><strong>${title}</strong></div>
           <a href="/download/cache?fileKey=${encodeURIComponent(fileKey)}" class="download-link" download>Click here to Download</a>
         `;
       } catch (err) {
