@@ -164,10 +164,6 @@
     const errorMsg = document.getElementById('errorMsg');
     const results = document.getElementById('results');
 
-    // API endpoints
-    const VIDEO_API = 'http://130.162.253.238:25915/download/ytmp4?url=';
-    const AUDIO_API = 'http://130.162.253.238:25915/download/ytmp3?url=';
-
     function validateYouTubeUrl(url) {
       const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
       return pattern.test(url);
@@ -196,7 +192,10 @@
       }
       showLoading(true);
 
-      const apiUrl = type === 'video' ? VIDEO_API + encodeURIComponent(videoUrl) : AUDIO_API + encodeURIComponent(videoUrl);
+      // Use the server proxy endpoints instead of direct external API URLs
+      const apiUrl = type === 'video' 
+        ? `/download/video?url=${encodeURIComponent(videoUrl)}`
+        : `/download/audio?url=${encodeURIComponent(videoUrl)}`;
 
       fetch(apiUrl)
         .then(res => {
