@@ -66,7 +66,7 @@ app.get('/download/video', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid data from external API' });
     }
     const fileKey = await cacheFileFromUrl(data.result.download_url);
-    res.json({ success: true, fileKey });
+    res.json({ success: true, fileKey, result: data.result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -88,7 +88,7 @@ app.get('/download/audio', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid data from external API' });
     }
     const fileKey = await cacheFileFromUrl(data.result.download_url);
-    res.json({ success: true, fileKey });
+    res.json({ success: true, fileKey, result: data.result });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
