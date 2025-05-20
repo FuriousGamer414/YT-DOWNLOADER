@@ -1,13 +1,49 @@
 const express = require('express');
-const path = require('path');
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+const cache = new Map();
+
+function generateFileKey() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, { timestamp }] of cache.entries()) {
+    if (now - timestamp > 10 * 60 * 1000) {
+      cache.delete(key);
+    }
+  }
+}, 60 * 1000);
+
+async function cacheFileFromUrl(downloadUrl) {
+  const res = await fetch(downloadUrl);
+  if (!res.ok) {
+    throw new Error(`Failed to download file from external URL: ${res.statusText}`);
+  }
+  const contentDisposition = res.headers.get('content-disposition') || '';
+  let filename = 'file';
+  const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+  if (match && match[1]) {
+    filename = match[1].replace(/['"]/g, '');
+  }
+  const mimeType = res.headers.get('content-type') || 'application/octet-stream';
+  const buffer = await res.buffer();
+
+  const fileKey = generateFileKey();
+  cache.set(fileKey, {
+    buffer,
+    filename,
+    mimeType,
+    timestamp: Date.now(),
+  });
+
+  return fileKey;
+}
 
 app.get('/download/video', async (req, res) => {
   const videoUrl = req.query.url;
@@ -16,25 +52,17 @@ app.get('/download/video', async (req, res) => {
   }
   try {
     const apiUrl = 'http://130.162.253.238:25915/download/ytmp4?url=' + encodeURIComponent(videoUrl);
-    console.log(`Proxying video download request for URL: ${videoUrl}`);
-    console.log(`Fetching external API: ${apiUrl}`);
-    const response = await fetch(apiUrl);
-    const text = await response.text();
-
-    if (!response.ok) {
-      console.error(`External API error: Status ${response.status} - Body: ${text}`);
-      try {
-        const errorJson = JSON.parse(text);
-        return res.status(response.status).json(errorJson);
-      } catch (e) {
-        return res.status(response.status).json({ success: false, message: 'External API error', details: text });
-      }
+    const apiRes = await fetch(apiUrl);
+    if (!apiRes.ok) {
+      return res.status(apiRes.status).json({ success: false, message: 'External API request failed' });
     }
-
-    const data = JSON.parse(text);
-    res.json(data);
+    const data = await apiRes.json();
+    if (!data.success || !data.result || !data.result.download_url) {
+      return res.status(400).json({ success: false, message: 'Invalid data from external API' });
+    }
+    const fileKey = await cacheFileFromUrl(data.result.download_url);
+    res.json({ success: true, fileKey });
   } catch (error) {
-    console.error(`Fetch error in /download/video: ${error.message}`);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -46,27 +74,33 @@ app.get('/download/audio', async (req, res) => {
   }
   try {
     const apiUrl = 'http://130.162.253.238:25915/download/ytmp3?url=' + encodeURIComponent(audioUrl);
-    console.log(`Proxying audio download request for URL: ${audioUrl}`);
-    console.log(`Fetching external API: ${apiUrl}`);
-    const response = await fetch(apiUrl);
-    const text = await response.text();
-
-    if (!response.ok) {
-      console.error(`External API error: Status ${response.status} - Body: ${text}`);
-      try {
-        const errorJson = JSON.parse(text);
-        return res.status(response.status).json(errorJson);
-      } catch (e) {
-        return res.status(response.status).json({ success: false, message: 'External API error', details: text });
-      }
+    const apiRes = await fetch(apiUrl);
+    if (!apiRes.ok) {
+      return res.status(apiRes.status).json({ success: false, message: 'External API request failed' });
     }
-
-    const data = JSON.parse(text);
-    res.json(data);
+    const data = await apiRes.json();
+    if (!data.success || !data.result || !data.result.download_url) {
+      return res.status(400).json({ success: false, message: 'Invalid data from external API' });
+    }
+    const fileKey = await cacheFileFromUrl(data.result.download_url);
+    res.json({ success: true, fileKey });
   } catch (error) {
-    console.error(`Fetch error in /download/audio: ${error.message}`);
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
+app.get('/download/cache', (req, res) => {
+  const fileKey = req.query.fileKey;
+  if (!fileKey || !cache.has(fileKey)) {
+    return res.status(404).send('File not found or cache expired');
+  }
+  const { buffer, filename, mimeType } = cache.get(fileKey);
+
+  res.setHeader('Content-Type', mimeType);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Length', buffer.length);
+
+  res.send(buffer);
 });
 
 app.listen(PORT, () => {
