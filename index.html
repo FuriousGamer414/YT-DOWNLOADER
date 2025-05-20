@@ -38,12 +38,14 @@
       max-width: 480px;
       width: 100%;
       box-sizing: border-box;
+      text-align: center;
     }
     label {
       font-weight: 600;
       font-size: 1rem;
       display: block;
       margin-bottom: 8px;
+      text-align: left;
     }
     input[type="url"] {
       width: 100%;
@@ -55,6 +57,8 @@
       box-sizing: border-box;
       margin-bottom: 20px;
       transition: box-shadow 0.3s ease;
+      background: #222;
+      color: #eee;
     }
     input[type="url"]:focus {
       box-shadow: 0 0 12px #ff0000;
@@ -110,20 +114,17 @@
       padding-top: 20px;
     }
     .download-link {
-      display: block;
-      margin-bottom: 12px;
+      display: inline-block;
+      margin-top: 15px;
       background: #ff2222;
-      padding: 12px 16px;
+      padding: 12px 25px;
       border-radius: 8px;
       color: #fff;
-      text-decoration: none;
       font-weight: 600;
-      text-align: center;
+      cursor: pointer;
       box-shadow: 0 4px 8px #ff0000aa;
       transition: background-color 0.3s ease;
-      cursor: pointer;
-      border: none;
-      width: 100%;
+      text-decoration: none;
     }
     .download-link:hover {
       background: #cc0000;
@@ -153,7 +154,7 @@
       <button class="audio-btn" id="downloadAudioBtn">Download Audio</button>
     </div>
 
-    <div class="loading" id="loading" style="display:none;">Loading...</div>
+    <div class="loading" id="loading" style="display:none;">Processing your request, please wait...</div>
     <div class="error" id="errorMsg" style="display:none;"></div>
 
     <div class="results" id="results"></div>
@@ -194,27 +195,11 @@
         return;
       }
       showLoading(true);
-
-      const newWindow = window.open('', '_blank', 'noopener');
-      if (!newWindow) {
-        showLoading(false);
-        showError('Popup blocked! Please allow popups for this site.');
-        return;
-      }
-      newWindow.document.title = 'Processing...';
+      results.innerHTML = '';
 
       const apiUrl = type === 'video' 
         ? `/download/video?url=${encodeURIComponent(videoUrl)}`
         : `/download/audio?url=${encodeURIComponent(videoUrl)}`;
-
-      setTimeout(() => {
-        if (newWindow.location.href === "about:blank") {
-          showLoading(false);
-          newWindow.close();
-          showError('Popup blocked! Please allow popups for this site.');
-          return;
-        }
-      }, 1000);
 
       fetch(apiUrl)
         .then(res => {
@@ -224,25 +209,18 @@
         .then(data => {
           showLoading(false);
           if (!data.success || !data.result) {
-            newWindow.close();
             showError('No download links available for this video.');
             return;
           }
           const { title, download_url } = data.result;
-          newWindow.location.href = download_url;
+
           results.innerHTML = `
-            <div>
-              <strong>Ready to download:</strong> ${type.charAt(0).toUpperCase() + type.slice(1)} - ${title}
-            </div>
-            <button class="download-link" id="retryBtn">Download Again</button>
+            <div><strong>Ready to download:</strong> ${type.charAt(0).toUpperCase() + type.slice(1)} - ${title}</div>
+            <a href="${download_url}" target="_blank" rel="noopener" class="download-link">Click here to Download</a>
           `;
-          document.getElementById('retryBtn').addEventListener('click', () => {
-            window.open(download_url, '_blank', 'noopener');
-          });
         })
         .catch(err => {
           showLoading(false);
-          newWindow.close();
           showError('Error fetching download links: ' + err.message);
         });
     }
