@@ -1,6 +1,7 @@
-FROM nginx:alpine
-RUN rm -rf /usr/share/nginx/html/*
-COPY index.html /usr/share/nginx/html/index.html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+FROM node:alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
 EXPOSE 10000
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]
