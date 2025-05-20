@@ -97,12 +97,6 @@
       background: #cc4400;
       box-shadow: 0 0 16px #ff5500cc;
     }
-    .loading {
-      font-style: italic;
-      color: #ff6666;
-      text-align: center;
-      margin-bottom: 15px;
-    }
     .error {
       margin-bottom: 15px;
       color: #ff4444;
@@ -130,6 +124,36 @@
       background: #cc0000;
       box-shadow: 0 0 14px #ff0000cc;
     }
+    .loader {
+      display: none;
+      width: 84px;
+      height: 84px;
+      position: relative;
+      margin: 20px auto;
+    }
+    .loader:before, .loader:after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #FFF;
+      transform: translate(-50%, -100%) scale(0);
+      animation: push_401 2s infinite linear;
+    }
+    .loader:after {
+      animation-delay: 1s;
+    }
+    @keyframes push_401 {
+      0%, 50% {
+        transform: translate(-50%, 0%) scale(1);
+      }
+      100% {
+        transform: translate(-50%, -100%) scale(0);
+      }
+    }
     @media (max-width: 520px) {
       .container {
         padding: 25px;
@@ -154,7 +178,7 @@
       <button class="audio-btn" id="downloadAudioBtn">Download Audio</button>
     </div>
 
-    <div class="loading" id="loading" style="display:none;">Processing your request, please wait...</div>
+    <div class="loader" id="loader"></div>
     <div class="error" id="errorMsg" style="display:none;"></div>
 
     <div class="results" id="results"></div>
@@ -164,7 +188,7 @@
     const urlInput = document.getElementById('urlInput');
     const downloadVideoBtn = document.getElementById('downloadVideoBtn');
     const downloadAudioBtn = document.getElementById('downloadAudioBtn');
-    const loading = document.getElementById('loading');
+    const loader = document.getElementById('loader');
     const errorMsg = document.getElementById('errorMsg');
     const results = document.getElementById('results');
 
@@ -185,7 +209,7 @@
     }
 
     function showLoading(show) {
-      loading.style.display = show ? 'block' : 'none';
+      loader.style.display = show ? 'block' : 'none';
     }
 
     function fetchDownloadLinks(videoUrl, type) {
