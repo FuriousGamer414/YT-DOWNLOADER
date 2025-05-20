@@ -121,6 +121,9 @@
       text-align: center;
       box-shadow: 0 4px 8px #ff0000aa;
       transition: background-color 0.3s ease;
+      cursor: pointer;
+      border: none;
+      width: 100%;
     }
     .download-link:hover {
       background: #cc0000;
@@ -192,7 +195,6 @@
       }
       showLoading(true);
 
-      // Use the server proxy endpoints instead of direct external API URLs
       const apiUrl = type === 'video' 
         ? `/download/video?url=${encodeURIComponent(videoUrl)}`
         : `/download/audio?url=${encodeURIComponent(videoUrl)}`;
@@ -209,9 +211,14 @@
             return;
           }
           const { title, download_url } = data.result;
-          results.innerHTML = `<a class="download-link" href="${download_url}" download target="_blank" rel="noopener noreferrer">
-            Download ${type.charAt(0).toUpperCase() + type.slice(1)} - ${title}
-          </a>`;
+          results.innerHTML = `
+            <button class="download-link" id="downloadBtn">
+              Download ${type.charAt(0).toUpperCase() + type.slice(1)} - ${title}
+            </button>
+          `;
+          document.getElementById('downloadBtn').addEventListener('click', () => {
+            window.open(download_url, '_blank', 'noopener');
+          });
         })
         .catch(err => {
           showLoading(false);
