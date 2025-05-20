@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YouTube Video & Audio Downloader</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    body {
+      margin: 0;
+      background: #121212;
+      color: #eee;
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      font-weight: 700;
+      font-size: 2.8rem;
+      color: #ff0000;
+      text-shadow: 0 0 10px #ff0000aa;
+      margin-bottom: 0.2em;
+    }
+    p.subtitle {
+      margin: 0 0 2rem 0;
+      font-size: 1.2rem;
+      color: #bbb;
+    }
+    .container {
+      background: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(255,0,0,0.4);
+      padding: 30px 40px;
+      max-width: 480px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    label {
+      font-weight: 600;
+      font-size: 1rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+    input[type="url"] {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      transition: box-shadow 0.3s ease;
+    }
+    input[type="url"]:focus {
+      box-shadow: 0 0 12px #ff0000;
+      background: #2b2b2b;
+      color: #fff;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 12px #ff000099;
+      color: #fff;
+    }
+    button.video-btn {
+      background: #ff0000;
+    }
+    button.video-btn:hover {
+      background: #cc0000;
+      box-shadow: 0 0 16px #ff0000cc;
+    }
+    button.audio-btn {
+      background: #ff5500;
+    }
+    button.audio-btn:hover {
+      background: #cc4400;
+      box-shadow: 0 0 16px #ff5500cc;
+    }
+    .loading {
+      font-style: italic;
+      color: #ff6666;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .error {
+      margin-bottom: 15px;
+      color: #ff4444;
+      font-weight: 600;
+      text-align: center;
+    }
+    .results {
+      border-top: 1px solid #333;
+      padding-top: 20px;
+    }
+    .download-link {
+      display: block;
+      margin-bottom: 12px;
+      background: #ff2222;
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: 0 4px 8px #ff0000aa;
+      transition: background-color 0.3s ease;
+    }
+    .download-link:hover {
+      background: #cc0000;
+      box-shadow: 0 0 14px #ff0000cc;
+    }
+    @media (max-width: 520px) {
+      .container {
+        padding: 25px;
+      }
+      h1 {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>YouTube Downloader</h1>
+  <p class="subtitle">Download YouTube videos and audio easily</p>
+
+  <div class="container">
+    <label for="urlInput">YouTube Video URL</label>
+    <input type="url" id="urlInput" placeholder="Enter YouTube video URL here" />
+
+    <div class="buttons">
+      <button class="video-btn" id="downloadVideoBtn">Download Video</button>
+      <button class="audio-btn" id="downloadAudioBtn">Download Audio</button>
+    </div>
+
+    <div class="loading" id="loading" style="display:none;">Loading...</div>
+    <div class="error" id="errorMsg" style="display:none;"></div>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById('urlInput');
+    const downloadVideoBtn = document.getElementById('downloadVideoBtn');
+    const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+    const loading = document.getElementById('loading');
+    const errorMsg = document.getElementById('errorMsg');
+    const results = document.getElementById('results');
+
+    // API endpoints
+    const VIDEO_API = 'http://130.162.253.238:25915/download/ytmp4?url=';
+    const AUDIO_API = 'http://130.162.253.238:25915/download/ytmp3?url=';
+
+    function validateYouTubeUrl(url) {
+      const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+      return pattern.test(url);
+    }
+
+    function clearMessages() {
+      errorMsg.style.display = 'none';
+      errorMsg.textContent = '';
+      results.innerHTML = '';
+    }
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = 'block';
+    }
+
+    function showLoading(show) {
+      loading.style.display = show ? 'block' : 'none';
+    }
+
+    function fetchDownloadLinks(videoUrl, type) {
+      clearMessages();
+      if (!validateYouTubeUrl(videoUrl)) {
+        showError('Please enter a valid YouTube URL.');
+        return;
+      }
+      showLoading(true);
+
+      const apiUrl = type === 'video' ? VIDEO_API + encodeURIComponent(videoUrl) : AUDIO_API + encodeURIComponent(videoUrl);
+
+      fetch(apiUrl)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch download links');
+          return res.json();
+        })
+        .then(data => {
+          showLoading(false);
+          if (!data.success || !data.result) {
+            showError('No download links available for this video.');
+            return;
+          }
+          const { title, download_url } = data.result;
+          results.innerHTML = `<a class="download-link" href="${download_url}" download target="_blank" rel="noopener noreferrer">
+            Download ${type.charAt(0).toUpperCase() + type.slice(1)} - ${title}
+          </a>`;
+        })
+        .catch(err => {
+          showLoading(false);
+          showError('Error fetching download links: ' + err.message);
+        });
+    }
+
+    downloadVideoBtn.addEventListener('click', () => {
+      fetchDownloadLinks(urlInput.value.trim(), 'video');
+    });
+    downloadAudioBtn.addEventListener('click', () => {
+      fetchDownloadLinks(urlInput.value.trim(), 'audio');
+    });
+  </script>
+</body>
+</html>
