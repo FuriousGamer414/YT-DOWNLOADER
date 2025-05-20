@@ -207,6 +207,15 @@
         ? `/download/video?url=${encodeURIComponent(videoUrl)}`
         : `/download/audio?url=${encodeURIComponent(videoUrl)}`;
 
+      setTimeout(() => {
+        if (newWindow.location.href === "about:blank") {
+          showLoading(false);
+          newWindow.close();
+          showError('Popup blocked! Please allow popups for this site.');
+          return;
+        }
+      }, 1000);
+
       fetch(apiUrl)
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch download links');
