@@ -1,6 +1,7 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const crypto = require('crypto');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -44,6 +45,10 @@ async function cacheFileFromUrl(downloadUrl) {
 
   return fileKey;
 }
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.get('/download/video', async (req, res) => {
   const videoUrl = req.query.url;
