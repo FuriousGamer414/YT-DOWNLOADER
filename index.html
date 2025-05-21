@@ -124,6 +124,18 @@
       background: #cc0000;
       box-shadow: 0 0 14px #ff0000cc;
     }
+    .processing-text {
+      font-weight: 700;
+      color: #ff4444;
+      font-size: 1.2rem;
+      margin-top: 20px;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -140,6 +152,8 @@
       <button class="audio-btn" id="downloadAudioBtn">Download Audio</button>
     </div>
 
+    <div id="processingMessage" class="processing-text" style="display:none;">Processing...</div>
+
     <div class="error" id="errorMsg" style="display:none;"></div>
     <div class="results" id="results"></div>
   </div>
@@ -148,6 +162,7 @@
     const urlInput = document.getElementById('urlInput');
     const downloadVideoBtn = document.getElementById('downloadVideoBtn');
     const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+    const processingMessage = document.getElementById('processingMessage');
     const errorMsg = document.getElementById('errorMsg');
     const results = document.getElementById('results');
 
@@ -160,6 +175,7 @@
       errorMsg.style.display = 'none';
       errorMsg.textContent = '';
       results.innerHTML = '';
+      processingMessage.style.display = 'none';
     }
 
     function showError(message) {
@@ -173,7 +189,8 @@
         showError('Please enter a valid YouTube URL.');
         return;
       }
-      results.innerHTML = 'Processing...';
+      processingMessage.style.display = 'block';
+      results.innerHTML = '';
 
       try {
         const apiUrl = type === 'video'
@@ -184,6 +201,7 @@
         if (!response.ok) throw new Error('Failed to fetch download links from server');
 
         const data = await response.json();
+        processingMessage.style.display = 'none';
 
         if (!data.success || !data.fileKey || !data.result || !data.result.title) {
           showError('No download link available.');
@@ -198,6 +216,7 @@
           <a href="/download/cache?fileKey=${encodeURIComponent(fileKey)}" class="download-link" download>Click here to Download</a>
         `;
       } catch (err) {
+        processingMessage.style.display = 'none';
         showError('Error: ' + err.message);
       }
     }
