@@ -56,7 +56,7 @@ app.get('/download/video', async (req, res) => {
     return res.status(400).json({ success: false, message: "Missing 'url' query parameter" });
   }
   try {
-    const apiUrl = 'http://130.162.253.238:25915/download/ytmp4?url=' + encodeURIComponent(videoUrl);
+    const apiUrl = 'http://209.74.83.85:30006/download/ytmp4?url=' + encodeURIComponent(videoUrl);
     const apiRes = await fetch(apiUrl);
     if (!apiRes.ok) {
       return res.status(apiRes.status).json({ success: false, message: 'External API request failed' });
