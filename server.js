@@ -78,7 +78,7 @@ app.get('/download/audio', async (req, res) => {
     return res.status(400).json({ success: false, message: "Missing 'url' query parameter" });
   }
   try {
-    const apiUrl = 'http://130.162.253.238:25915/download/ytmp3?url=' + encodeURIComponent(audioUrl);
+    const apiUrl = 'http://209.74.83.85:30006/download/ytmp3?url=' + encodeURIComponent(audioUrl);
     const apiRes = await fetch(apiUrl);
     if (!apiRes.ok) {
       return res.status(apiRes.status).json({ success: false, message: 'External API request failed' });
